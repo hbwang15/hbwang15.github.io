@@ -112,15 +112,15 @@ var _hmt = _hmt || [];
 
   
     
-    <h3 class="article-title"><a href="/2020/05/15/test/"><span> test</span></a></h3>
+    <h3 class="article-title"><a href="/2020/05/16/C++中#pargma once与#ifndef的使用/"><span>C++中#pargma once与#ifndef的使用</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
-      <a href="/2020/05/15/test/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-05-15T14:40:56.000Z">
-          2020-05-15
+      <a href="/2020/05/16/C++中#pargma once与#ifndef的使用/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-05-16T14:00:37.554Z">
+          2020-05-16
         </time>
       </a>
     </span>
@@ -134,73 +134,14 @@ var _hmt = _hmt || [];
   <div class="article-content">
     <div class="entry">
       
-          
-      
-    </div>
-    
-  </div>
+          <h1 id="C-C-中-pargma-once与-ifndef的使用"><a href="#C-C-中-pargma-once与-ifndef的使用" class="headerlink" title="C/C++中#pargma once与 #ifndef的使用"></a>C/C++中#pargma once与 #ifndef的使用</h1><p>在c/c++中，为了避免同一个文件被include多次，有两种不同的方式解决这个问题：</p>
+<h2 id="一、-ifndef方式"><a href="#一、-ifndef方式" class="headerlink" title="一、#ifndef方式"></a>一、#ifndef方式</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> SOME_UNIQUE_NAME_HERE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SOME_UNIQUE_NAME_HERE</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//some header code here</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+<h2 id="二、-pragma-once方式"><a href="#二、-pragma-once方式" class="headerlink" title="二、#pragma once方式"></a>二、#pragma once方式</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">pragma</span> once </span></span><br><span class="line"></span><br><span class="line"><span class="comment">//some header code here</span></span><br></pre></td></tr></table></figure>
 
-    
-
-    
-
-    </div>
-
-    
-  </div>
-  
-    
-    <h3 class="article-read"><a href="/2020/05/15/test/"><span>more</span></a></h3>
-    
-  
-</article>
-
-
-
-
-
-  <article class="article-container ">
-
-  
-    
-    <h3 class="article-title"><a href="/2020/05/15/hello-world/"><span>Hello World</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/05/15/hello-world/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-05-15T14:18:57.809Z">
-          2020-05-15
-        </time>
-      </a>
-    </span>
-    <br />
-    
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-          <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+<h2 id="三、两者的比较"><a href="#三、两者的比较" class="headerlink" title="三、两者的比较"></a>三、两者的比较</h2><p>​       #ifndef的方式是受c/c++语言标准支持。#ifndef方式依赖宏名不能冲突，它不光保证同一个文件不会被包含多次，也能保证内容完全相同的两个文件不会被不小心同时包含。缺点是如果两个不同的头文件不小心定义了相同的宏名这样会导致想要的头文件没有被包含进去，到时候，头文件明明存在，编译器却说找不到声明的情况。由于编译器每次都需要打开头文件才能判读是否有重复定义，因此在编译大型项目时，#ifndef就会使得编译时间相对较长，因此一些编译器逐渐开始支持#pragma once的方式</p>
+<p>​       #pragma once一般由编译器提供保证：同一个文件不会被两次包含。这里的同一个文件指的是物理上的一个文件，而不是内容相同的两个文件。无法对一个头文件中的一段代码作pragma once声明，而只能针对文件。此方式不会出现宏名不小心一致导致的奇怪问题，大型项目的编译速度也因此提高了一些。缺点是如果某个头文件有多份拷贝，此方法不能保证它们不会被重复包含。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><p>​      #pragma once方式产生于#ifndef之后。#ifndef 方式受c/c++标准的支持，不受编译器的任何限制；而#pragma once方式有些编译器不支持（如gcc 3.4版本之前不支持#pragma once)，兼容性不是很好。#ifndef针对一个文件中的部分代码，而#pragma once只能针对整个文件</p>
 
       
     </div>
@@ -220,7 +161,7 @@ var _hmt = _hmt || [];
   </div>
   
     
-    <h3 class="article-read"><a href="/2020/05/15/hello-world/"><span>more</span></a></h3>
+    <h3 class="article-read"><a href="/2020/05/16/C++中#pargma once与#ifndef的使用/"><span>more</span></a></h3>
     
   
 </article>
