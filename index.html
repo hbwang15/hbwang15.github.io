@@ -112,6 +112,122 @@ var _hmt = _hmt || [];
 
   
     
+    <h3 class="article-title"><a href="/2020/05/17/printf、sprinf即snprinf的格式化的使用/"><span>printf、sprinf即snprinf的格式化的使用</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/05/17/printf、sprinf即snprinf的格式化的使用/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-05-17T08:02:11.060Z">
+          2020-05-17
+        </time>
+      </a>
+    </span>
+    <br />
+    
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+          <h1 id="printf、sprinf即snprinf的格式化的使用"><a href="#printf、sprinf即snprinf的格式化的使用" class="headerlink" title="printf、sprinf即snprinf的格式化的使用"></a>printf、sprinf即snprinf的格式化的使用</h1><p>在平常的编程实践中，发现sprintf和snprintf的效率会比string类型的“+”的效率会高一些，并且我们常用sprintf和snprintf进行整型到字符串的转换，那么使用过程中怎么去更好的控制格式呢？它们又分别是什么含义呢？今天这篇文章带你一一解答</p>
+<p>总体格式：</p>
+<figure class="highlight erlang-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">%【参数】【标志】【宽度】【.精度】【长度】类型</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="一、参数"><a href="#一、参数" class="headerlink" title="一、参数"></a>一、参数</h3><p>参数字段为 POSIX 扩展功能，非 C99 标准定义。使用 <code>m$</code> 指定格式化字符串之后的第 m 个参数，从 1 开始编号。假如使用了参数字段，则所有的参数必须都至少使用一次，即从 <code>1$</code> 到 <code>n$</code> 都必须至少出现一次（其中 <code>n</code> 为格式化字符串之后的参数个数），否则编译时将产生如下警告：</p>
+<blockquote>
+<p>warning: missing $ operand number in format [-Wformat=]</p>
+</blockquote>
+<p>借助参数字段，可以实现参数的多次使用、乱序使用等，而不需要重复书写参数。例如：<code>printf(&quot;%2$d %2$#x; %1$d %1$#x&quot;,16,17)</code> 将输出 <code>17 0x11; 16 0x10</code>，两个参数都使用了两次，且先使用第二个参数（同时也使用了下一节的 <code>#</code> 标志）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%2$d %2$x, %1$i %1$#x\n"</span>, <span class="number">12</span>, <span class="string">'c'</span>); <span class="comment">//2$ 1$为参数，x指定为16进制输出，d指定为10进制输出，#在16进制输出时添加0x</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//result is： 99 63, 12 0xc</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="二、标示"><a href="#二、标示" class="headerlink" title="二、标示"></a>二、标示</h3><ul>
+<li>-：左对齐（默认为右对齐）</li>
+<li>+：给正数附加符号前缀（默认正数没有任何前缀）</li>
+<li>：空格给正数附加空格前缀</li>
+<li>0：指定了宽度字段且为右对齐时，前缀补0（默认补空格；当使用了-标志左对齐时，0标志失效）</li>
+<li>#： 使用【备选格式】。对于g和G类型，不省略小数点部分最后的0；对于f, F, e, E, g, G类型，总是输出小数点；对于o, x, X类型，分别在非零数值前附加0， 0x， 0X前缀</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">"%-d\n"</span>, <span class="number">122422312</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%+i\n"</span>, <span class="number">1224223123</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"% d\n"</span>, <span class="number">1224223123</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%04d\n"</span>, <span class="number">12</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%#f\n"</span>, <span class="number">1.23</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%#o\n"</span>,<span class="number">10</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%#x\n"</span>,<span class="number">10</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="三、宽度"><a href="#三、宽度" class="headerlink" title="三、宽度"></a>三、宽度</h3><p>宽度字段指定输出字符的最小长度，长度不足的输出将使用填充字段补齐，填充字符及对齐方式使用上述的0标志和-标志确定</p>
+<p>当指定宽度字段时，可使用确定的整数值静态指定，也可使用*号由某个参数动态指定。例如，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">"%0*d\n"</span>, <span class="number">5</span>, <span class="number">10</span>)</span><br></pre></td></tr></table></figure>
+
+<p>将会输出：00010。</p>
+<h3 id="四、精度"><a href="#四、精度" class="headerlink" title="四、精度"></a>四、精度</h3><p>精度字段指出输出字符的最大长度。对于浮点型数据来说，精度字段指定了小数点后的最大有效位数；对字符串来说，精度字段指定了输出的最大字符数。</p>
+<p>与宽度字段相同，指定精度字段时，也可以使用确定的整数或者*号动态指定。为了与宽度字段做出区分，精度字段前面必须加句点。例如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">"%.*f\n"</span>,<span class="number">3</span>, <span class="number">12.34445</span>)</span><br></pre></td></tr></table></figure>
+
+<p>将会输出：12.344</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">printf</span><span class="params">(<span class="string">"%.*s\n"</span>,<span class="number">3</span>, <span class="string">"abcdefgh"</span>)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>将会输出abc。</p>
+<p>如果没有句点，将会解释为宽度标志（最小长度），而精度字段没有指定，因此会输出abcdefgh</p>
+<h3 id="五、长度"><a href="#五、长度" class="headerlink" title="五、长度"></a>五、长度</h3><ul>
+<li><code>hh</code>: 用于将 <code>char</code> 型参数转换成 <code>int</code> 型输出。</li>
+<li><code>h</code>: 用于将 <code>short</code> 型参数转换成 <code>int</code> 型输出。</li>
+<li><code>l</code>: 用于输出 <code>long</code> 型参数。对于浮点型无效果。</li>
+<li><code>ll</code>: 用于输出 <code>long long</code> 型参数。</li>
+<li><code>L</code>: 用于输出 <code>long double</code> 型参数。</li>
+<li><code>z</code>: 用于输出 <code>size_t</code> 型参数。</li>
+<li><code>j</code>: 用于输出 <code>intmax_t</code> 型参数。</li>
+<li><code>t</code>: 用于输出 <code>ptrdiff_t</code> 型参数。</li>
+</ul>
+<p>另有一些平台特定的非标准长度字符，如 <code>I</code>、<code>I32</code>、<code>I64</code>、<code>q</code> 等</p>
+<h3 id="六、类型"><a href="#六、类型" class="headerlink" title="六、类型"></a>六、类型</h3><ul>
+<li>%：原样输出一个%符号，此类型不接收任何其他字段，即只能使用%%</li>
+<li>d, i: 输出十进制signed int型数据。二者仅仅在使用scanf输入时有区别（使用%i将0x开头的解释为16进制，将0开头的数解释为8进制数）</li>
+<li>u：输出十进制unsigned int型数据</li>
+<li>f，F：以定点数表示法输出double型数据。二者区别在于无限小数和 NaN 输出时是全小写的 <code>inf</code>、<code>infinity</code>、<code>nan</code> 还是全大写的 <code>INF</code>、<code>INFINITY</code>、<code>NAN</code></li>
+<li>e, E: 以指数表示法输出double类型数据。二者区别在于字符e的大小写</li>
+<li>g，G：根据指数自动选择定点数表示法还是指数表示法。二者的区别在于输出字符的大小写。以定点数表示法输出时与f/F的区别在于，可能省略小数部分最后的0或小数点（数据为整数时）</li>
+<li>x, X: 输出十六进制 <code>unsigned int</code> 型数据。二者区别在于十六进制数的字符大小写</li>
+<li>o : 输出八进制 <code>unsigned int</code> 型数据。</li>
+<li>s: 输出以\0为结尾的字符串</li>
+<li>c：输出一个char字符</li>
+<li>p：输出void*，输出格式依赖于具体实现</li>
+<li>a，A：输出十六进制double型数据，前缀0x或0X</li>
+<li>n : 将当前的格式化字符串中已成功输出的字符数写入一个整型参数，字符数不包括 <code>\n</code>、<code>\t</code> 等转义字符。从输入输出的方向来说，此类型使用时更像是在 <code>scanf</code> 中接受输入，只不过输入不是来自用户、而是来自系统计数。注意：此计数仅对当前格式化字符串有效，重新开始一个格式化字符串时，计数将重置为 0。例如：<code>printf(&quot;%n&quot;, &amp;num)</code> 将把 <code>num</code> 赋值为 0。</li>
+</ul>
+<figure class="highlight cc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">"%%\n"</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d, %i\n"</span>, <span class="number">1</span>, <span class="number">-2</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%u\n"</span>, <span class="number">-1</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%f, %F\n"</span>, <span class="number">12.0</span>, <span class="number">13.9</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%e, %E\n"</span>, <span class="number">12.0</span>, <span class="number">18.0</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%g, %G\n"</span>, <span class="number">1212333444.0</span>, <span class="number">123.0</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%x, %X\n"</span>, <span class="number">12</span>, <span class="number">13</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%o\n"</span>, <span class="number">12</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%s\n"</span>, <span class="string">"11111"</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%c\n"</span>, <span class="string">'a'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">string</span> str = <span class="string">"jack"</span>;</span><br><span class="line"><span class="keyword">void</span>* s = &amp;str;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%p\n"</span>, s);</span><br><span class="line"></span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%a, %A\n"</span>, <span class="number">12.0</span>, <span class="number">12.87</span>);</span><br><span class="line"><span class="comment">// printf("%f\n", 12.0);</span></span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+  
+    
+    <h3 class="article-read"><a href="/2020/05/17/printf、sprinf即snprinf的格式化的使用/"><span>more</span></a></h3>
+    
+  
+</article>
+
+
+
+
+
+  <article class="article-container ">
+
+  
+    
     <h3 class="article-title"><a href="/2020/05/17/c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比/"><span>c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比</span></a></h3>
     
   
