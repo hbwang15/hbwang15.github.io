@@ -3,21 +3,26 @@
 <head >
   <meta charset="utf-8">
   
-  <title>whb blog | stay hungry stay foolish</title>
+  <title>c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比 | whb blog | stay hungry stay foolish</title>
 
   
   <meta name="author" content="whb">
   
 
   
+  <meta name="description" content="c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比c++中常用的字符串拼接有snprintf 、append、+，以及+=，众所周知，使用sprintf容易造成内存溢出的问题，所以这里暂时不针对它进行分析比较。那么其他几个字符串拼接函数中，哪个函数的效率是最高的">
+  
 
+  
+  
+  <meta name="keywords" content="">
   
 
   <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  
+  <meta property="og:title" content="c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比"/>
 
   <meta property="og:site_name" content="whb blog"/>
 
@@ -101,18 +106,16 @@ var _hmt = _hmt || [];
 </header>
 
         
-        <div class="container ">
+          <div class="container ">
           <div class="row">
-            <main class="site-main posts-loop    col-lg-8 col-lg-offset-1
-                    col-md-8 col-md-offset-1
-                    col-sm-12
-                    col-xs-12">
-            
-  <article class="article-container ">
+            <main class="site-main posts-loop col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container" style="position: inherit;">
+            <article class="article-container ">
 
   
     
-    <h3 class="article-title"><a href="/2020/05/17/c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比/"><span>c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比</span></a></h3>
+    <h3 class="article-title"><span>c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比</span></h3>
     
   
 
@@ -125,6 +128,10 @@ var _hmt = _hmt || [];
       </a>
     </span>
     <br />
+    
+    <span id="busuanzi_container_page_pv">
+      本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+    </span>
     
   </div>
 
@@ -167,144 +174,94 @@ var _hmt = _hmt || [];
   </div>
   
     
-    <h3 class="article-read"><a href="/2020/05/17/c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比/"><span>more</span></a></h3>
     
   
 </article>
-
-
-
-
-
-  <article class="article-container ">
-
-  
-    
-    <h3 class="article-title"><a href="/2020/05/16/C++中#pargma once与#ifndef的使用/"><span>C++中#pargma once与#ifndef的使用</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/05/16/C++中#pargma once与#ifndef的使用/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-05-16T14:00:37.554Z">
-          2020-05-16
-        </time>
-      </a>
-    </span>
-    <br />
-    
-  </div>
+   
+    <div id="toc" class="toc-article ">
+    <div class="toc-title">目录</div>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#c-中sprintf-、-snprintf、-、-、append拼接字符串效率对比"><span class="toc-number">1.</span> <span class="toc-text">c++中sprintf 、 snprintf、+&#x3D; 、+、append拼接字符串效率对比</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#一、使用snprintf、-、-、-append进行实验"><span class="toc-number">1.1.</span> <span class="toc-text">一、使用snprintf、+&#x3D;、 +、 append进行实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二、总结"><span class="toc-number">1.2.</span> <span class="toc-text">二、总结</span></a></li></ol></li></ol>
+</div>
 
 
   
 
-  <div class="article-content">
-    <div class="entry">
-      
-          <h1 id="C-C-中-pargma-once与-ifndef的使用"><a href="#C-C-中-pargma-once与-ifndef的使用" class="headerlink" title="C/C++中#pargma once与 #ifndef的使用"></a>C/C++中#pargma once与 #ifndef的使用</h1><p>在c/c++中，为了避免同一个文件被include多次，有两种不同的方式解决这个问题：</p>
-<h2 id="一、-ifndef方式"><a href="#一、-ifndef方式" class="headerlink" title="一、#ifndef方式"></a>一、#ifndef方式</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> SOME_UNIQUE_NAME_HERE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SOME_UNIQUE_NAME_HERE</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//some header code here</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
-
-<h2 id="二、-pragma-once方式"><a href="#二、-pragma-once方式" class="headerlink" title="二、#pragma once方式"></a>二、#pragma once方式</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">pragma</span> once </span></span><br><span class="line"></span><br><span class="line"><span class="comment">//some header code here</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="三、两者的比较"><a href="#三、两者的比较" class="headerlink" title="三、两者的比较"></a>三、两者的比较</h2><p>​       #ifndef的方式是受c/c++语言标准支持。#ifndef方式依赖宏名不能冲突，它不光保证同一个文件不会被包含多次，也能保证内容完全相同的两个文件不会被不小心同时包含。缺点是如果两个不同的头文件不小心定义了相同的宏名这样会导致想要的头文件没有被包含进去，到时候，头文件明明存在，编译器却说找不到声明的情况。由于编译器每次都需要打开头文件才能判读是否有重复定义，因此在编译大型项目时，#ifndef就会使得编译时间相对较长，因此一些编译器逐渐开始支持#pragma once的方式</p>
-<p>​       #pragma once一般由编译器提供保证：同一个文件不会被两次包含。这里的同一个文件指的是物理上的一个文件，而不是内容相同的两个文件。无法对一个头文件中的一段代码作pragma once声明，而只能针对文件。此方式不会出现宏名不小心一致导致的奇怪问题，大型项目的编译速度也因此提高了一些。缺点是如果某个头文件有多份拷贝，此方法不能保证它们不会被重复包含。</p>
-<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><p>​      #pragma once方式产生于#ifndef之后。#ifndef 方式受c/c++标准的支持，不受编译器的任何限制；而#pragma once方式有些编译器不支持（如gcc 3.4版本之前不支持#pragma once)，兼容性不是很好。#ifndef针对一个文件中的部分代码，而#pragma once只能针对整个文件</p>
-
-      
-    </div>
-    
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-  
-    
-    <h3 class="article-read"><a href="/2020/05/16/C++中#pargma once与#ifndef的使用/"><span>more</span></a></h3>
-    
-  
-</article>
-
+	<!-- async load  -->
+	<script>
+			function async(u, c) {
+				var d = document, t = 'script',
+						o = d.createElement(t),
+						s = d.getElementsByTagName(t)[0];
+				o.src = u;
+				if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+				s.parentNode.insertBefore(o, s);
+			}
+	</script>
+	<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+	<script>
+			async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+					anchors.options = {
+						visible: 'hover',
+						placement: 'left',
+						// icon: '#'
+					};
+					anchors.add().remove('.article-title').remove('.subheading').remove('.sidebar-container h5');
+			})
+	</script>
+	<style>
+			/* place left on bigger screen */
+			@media all and (min-width: 800px) {
+					.anchorjs-link{
+							position: absolute;
+							left: -0.75em;
+							font-size: 1.1em;
+							margin-top : -0.1em;
+					}
+			}
+	</style>
 
 
 
 
+<!-- UY BEGIN -->
+	<div id="gitment-container"></div>
+	<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+	<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+	<script src="/js/web-pinyin.js"></script>
+	<script>
+		function toUnicode(s){ 
+			return s.replace(/([\u4E00-\u9FA5]|[\uFE30-\uFFA0])/g,function(){
+			return "\\u" + RegExp["$1"].charCodeAt(0).toString(16);
+			});
+		}
+		var title = 'c++中sprintf 、 snprintf、+= 、+、append拼接字符串效率对比'
+		var GitHub_id = 'Boseny'
+		var client_id = 'f40c67d0359a2646d2b1'
+		var client_secret = '1cbedbd1a1a2e4b42901aee3d7afe1856c1b7e2d'
+		var repo = 'boseny.me'
+		var gitment = new Gitment({
+		// id: '页面 ID', // 可选。默认为 location.href
+		// id:"11" ,
+		id: title,
+		title: title,
+		owner: GitHub_id,//'你的 GitHub ID',
+		repo: repo,//'存储评论的 repo',
+		oauth: {
+			client_id: client_id,//'你的 client ID',
+			client_secret: client_secret,//'你的 client secret',
+		},
+		})
+		gitment.render('gitment-container')
+	</script>
+<!-- UY END -->
 
-<nav class="pagination">
-  
-  
-</nav>
+
+
+
             </main>
-            <div class="sidebar
-                    col-lg-3 col-lg-offset-0
-                    col-md-3 col-md-offset-0
-                    col-sm-12
-                    col-xs-12
-                    sidebar-container
-                ">
-
-                <div class="sidebar-container">
-
-
-
-<div class="search-container">
-<form class="site-search-form">
-    <span class="glyphicon glyphicon-search"></span><input type="text" id="local-search-input" class="st-search-input" placeholder="Search..." />
-</form>
-<div id="local-search-result" class="local-search-result-cls"></div>
-</div>
-<script type="text/javascript" id="local.search.active">
-var inputArea       = document.querySelector("#local-search-input");
-inputArea.onclick   = function(){ getSearchFile(); this.onclick = null }
-inputArea.onkeydown = function(){ if(event.keyCode == 13) return false }
-</script>
-
-
-
-
-    <div class="categories-container" style="margin-top:40px;">
-        <p>归档:</p>
-            
-    </div>
-
-
-
-
-    <div class="social-container" style="margin-top:40px;">
-        <p>Links:</p>
-            
-                
-                    <li class="social-item"><i class="fa fa-fw fa-github"></i><a href="https://github.com/Boseny" target="_blank" rel="noopener">GitHub</a></li>
-                
-            
-                
-                    <li class="social-item"><i class="fa fa-fw fa-weibo"></i><a href="https://weibo.com/boseny" target="_blank" rel="noopener">微博</a></li>
-                
-            
-                
-                    <li class="social-item"><i class=" fa fa-fw zhihu-icon"></i><a href="https://www.zhihu.com/people/boseny" target="_blank" rel="noopener">知乎</a></li>
-                
-            
-                
-                    <li class="social-item"><i class=" fa fa-fw lofter-icon"></i><a href="http://boseny.lofter.com/" target="_blank" rel="noopener">Lofter</a></li>
-                
-            
-    </div>
-
-</div>
-            </div>
           </div>
         </div>
-        
+       
     <footer class="site-footer">
   <p class="site-info">
     Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
