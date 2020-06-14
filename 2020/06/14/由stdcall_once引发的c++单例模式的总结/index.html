@@ -1,0 +1,340 @@
+<!DOCTYPE HTML>
+<html>
+<head >
+  <meta charset="utf-8">
+  
+  <title>由stdcall_once引发的c++单例模式的总结 | whb blog | stay hungry stay foolish</title>
+
+  
+  <meta name="author" content="whb">
+  
+
+  
+  <meta name="description" content="由std::call_once引发的c++单例模式的总结​        由于学习c++并发编程这本书，书中提到可以使用std::call_once保证某函数只执行一次，所以将类的实例放到函数中去初始化，不就符合在多线程中单例模式的实现吗？想到这里，就想重温一下老的单例模式到底是如何实现的，也好跟现">
+  
+
+  
+  
+  <meta name="keywords" content="">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="由stdcall_once引发的c++单例模式的总结"/>
+
+  <meta property="og:site_name" content="whb blog"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+  
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-5005349780815724",
+    enable_page_level_ads: true
+  });
+</script>
+
+  
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?223eea22355699157e147870eb124b24";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+  <link rel="manifest" href="/manifest.json">
+  <link href="/favicon.ico" rel="icon">
+
+  <link rel="alternate" href="/atom.xml" title="whb blog" type="application/atom+xml">
+  <link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base/bootstrap.min.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+
+
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    
+
+    <header class="header-container" style="background-image: url('/images/blog-bg.jpg');">
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header page-scroll">
+          <button type="button" id="tglBtn" class="navbar-toggle">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">whb</a>
+        </div>
+        <div id="bosenyblog-navbar">
+          <div class="navbar-collapse" id="bs-example-navbar-collapse-6">
+            <ul class="nav navbar-nav navbar-right">
+            
+              <li><a href="/">Home</a></li>
+            
+              <li><a href="/archives">Archives</a></li>
+            
+              <li><a href="/about">About</a></li>
+            
+              <li><a href="/tags">Tags</a></li>
+            
+            </ul>
+          </div>
+        </div>
+
+    </div>
+ </nav>
+ <div class="gotop-btn">
+
+ </div>
+</header>
+
+        
+          <div class="container ">
+          <div class="row">
+            <main class="site-main posts-loop col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container" style="position: inherit;">
+            <article class="article-container ">
+
+  
+    
+    <h3 class="article-title"><span>由stdcall_once引发的c++单例模式的总结</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/06/14/由stdcall_once引发的c++单例模式的总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-06-14T14:28:57.418Z">
+          2020-06-14
+        </time>
+      </a>
+    </span>
+    <br />
+    
+    <span id="busuanzi_container_page_pv">
+      本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+    </span>
+    
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+          <h1 id="由std-call-once引发的c-单例模式的总结"><a href="#由std-call-once引发的c-单例模式的总结" class="headerlink" title="由std::call_once引发的c++单例模式的总结"></a>由std::call_once引发的c++单例模式的总结</h1><p>​        由于学习c++并发编程这本书，书中提到可以使用std::call_once保证某函数只执行一次，所以将类的实例放到函数中去初始化，不就符合在多线程中单例模式的实现吗？想到这里，就想重温一下老的单例模式到底是如何实现的，也好跟现在的做做对比，加深理解。废话不多说，首先重温一下原来的单例模式到底是如何实现的吧？</p>
+<h2 id="饿汉式："><a href="#饿汉式：" class="headerlink" title="饿汉式："></a>饿汉式：</h2><p>常规的单例模式的设计，仅仅能通过Instance方法得到类的实例（往往是引用或者指针，毕竟只有一个实例）。因此，第一要点考虑的就是禁止构造函数，拷贝构造和赋值函数。如果需要释放资源，一般不允许调用delete方法，最多对外提供release（或者Destroy)方法来释放内部资源。</p>
+<p>下面是最简单的饿汉式实现方案：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">singleton</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">   singleton() =<span class="keyword">default</span>;</span><br><span class="line">   singleton(<span class="keyword">const</span> singleton &amp; ) =<span class="keyword">delete</span>;</span><br><span class="line">   singleton&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> singleton&amp;) =<span class="keyword">delete</span>;</span><br><span class="line">   ~singleton()=<span class="keyword">default</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">   <span class="function"><span class="keyword">static</span> singleton&amp; <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">       <span class="keyword">static</span> singleton _instance;</span><br><span class="line">       <span class="keyword">return</span> _instance;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>因为不能通过构造函数来得到类的实例，因此类的Instance方法必须是static（即绑定到类对象设计本身，不属于类实例的方法）。静态变量会在第一使用时初始化，多次调用会被编译器忽略，生命周期是程序的运行区间，并且是多线程安全的。因为静态局部变量分配在全局静态区，内存一直都在。</p>
+<h4 id="返回指针类型："><a href="#返回指针类型：" class="headerlink" title="返回指针类型："></a>返回指针类型：</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">singletonPoiner</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">singletonPoiner()=<span class="keyword">default</span>;</span><br><span class="line">~singletonPoiner()=<span class="keyword">default</span>;</span><br><span class="line">singletonPoiner(<span class="keyword">const</span> singletonPoiner&amp;)= <span class="keyword">delete</span>;</span><br><span class="line">singletonPoiner&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> singletonPoiner&amp;)=<span class="keyword">delete</span>; </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">static</span> singletonPoiner* <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">      <span class="keyword">static</span> singletonPoiner _instance;</span><br><span class="line">      <span class="keyword">return</span> &amp;_instance;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="懒汉式："><a href="#懒汉式：" class="headerlink" title="懒汉式："></a>懒汉式：</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">singleton</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    singleton()=<span class="keyword">default</span>;</span><br><span class="line">    ~singleton()=<span class="keyword">default</span>;</span><br><span class="line">    singleton(<span class="keyword">const</span> singleton&amp;) =<span class="keyword">delete</span>;</span><br><span class="line">    singleton&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> singleton&amp;) =<span class="keyword">delete</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> singleton* <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">            _pInstance = <span class="keyword">new</span> singleton;</span><br><span class="line">            <span class="keyword">return</span> _pInstance;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">static</span> singleton* _pInstance;</span><br><span class="line">   </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这是非常简单的懒汉式实现方式，即看看指针存在否，不存在new一下。但存在以下一些问题：</p>
+<p>1、内存无法正常释放。</p>
+<p>2、多线程不安全。</p>
+<p>尽管如此，如果您的管理类的生命周期和程序一样长时，就可以不考虑内存泄露，毕竟操作系统会在程序退出时自动回收内存。</p>
+<h4 id="优化版："><a href="#优化版：" class="headerlink" title="优化版："></a>优化版：</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;mutex&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">singleton</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    singleton()=<span class="keyword">default</span>;</span><br><span class="line">    ~singleton()=<span class="keyword">default</span>;</span><br><span class="line">    singleton(<span class="keyword">const</span> singleton&amp;)=<span class="keyword">delete</span>;</span><br><span class="line">    singleton&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> singleton&amp;) =<span class="keyword">delete</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> singleton* <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="function"><span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; <span class="title">guard</span><span class="params">(mtx)</span></span>;</span><br><span class="line">        <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">            _pInstance = <span class="keyword">new</span> singleton;</span><br><span class="line">        &#125;</span><br><span class="line">         <span class="keyword">return</span> _pInstance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Destroy</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="function"><span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; <span class="title">guard</span><span class="params">(mtx)</span></span>;</span><br><span class="line">        <span class="keyword">if</span>(_pInstance)&#123;</span><br><span class="line">            <span class="keyword">delete</span> _pInstance;</span><br><span class="line">            _pInstance = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">static</span> singleton* _pInstance;</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">std</span>::mutex mtx;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们可以使用Double-checked locking pattern（DCLP）来减少锁的竞争机会，因为绝大数情况_pInstance都是非空的。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> singleton* <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">       <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">           <span class="function"><span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; <span class="title">guard</span><span class="params">(mtx)</span></span>;</span><br><span class="line">           <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">               _pInstance = <span class="keyword">new</span> singleton;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">return</span> _pInstance;</span><br><span class="line">     </span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>尽管这个术语非常高大上，很多博客也会提及，但其实细究起来，它并不是线程安全的。</p>
+<p>注意到_pInstance = new singleton(), 是一个写操作，前面有一个无锁的读操作。当真正的写操作进行时，前面的读操作存在脏读情况。</p>
+<p>_pInstance = new singleton(), 表面上一个语句，展开后由</p>
+<p>1、malloc 一块内存，地址复制到_pInstance</p>
+<p>2、针对_pInstance 地址上调用placement new进行类的构造</p>
+<p>当多线程情况下，一个线程有可能进行了一之后，另外一个线程进来后，判断非空，进行类对象的访问，导致crash。</p>
+<p>如果这样写的项目没有遇到崩溃，大概率都是在main的某个地方提前实例化过了（如管理类很多有init方法，调用了就实例化了）</p>
+<p>这个崩溃的概率非常小，需要多线程恰好同时调用Instance，并且某一个线程执行了malloc之后，分成时间片，另外一个线程拿到了未构造的类实例进行操作。</p>
+<p>另外，优化后的单例还是有内存泄露的风险，用户可能忘记Destroy了，有时也不敢乱Destroy。想要自动管理内存释放？可以增加一个垃圾收集类。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;mutex&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">singleton</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    singleton() = <span class="keyword">default</span>;</span><br><span class="line">    ~singleton() = <span class="keyword">default</span>;</span><br><span class="line">    singleton(<span class="keyword">const</span> singleton&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    singleton&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> singleton&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">   <span class="function"><span class="keyword">static</span> singleton* <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">       <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">           <span class="function"><span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; <span class="title">guard</span><span class="params">(mtx)</span></span>;</span><br><span class="line">           <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">                _pInstance = <span class="keyword">new</span> singleton;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">return</span> _pInstance;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Destroy</span><span class="params">()</span></span>&#123;</span><br><span class="line">       <span class="function"><span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; <span class="title">guard</span><span class="params">(mtx)</span></span>;</span><br><span class="line">       <span class="keyword">if</span>(_pInstance)&#123;</span><br><span class="line">           <span class="keyword">delete</span> _pInstance;</span><br><span class="line">           _pInstance = <span class="literal">nullptr</span>;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">GarbageCollect</span>&#123;</span></span><br><span class="line">        ~GarbageCollect()&#123;</span><br><span class="line">            <span class="keyword">if</span>(_pInstance)&#123;</span><br><span class="line">                <span class="keyword">delete</span> _pInstance;</span><br><span class="line">                _pInstance = <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">   <span class="keyword">static</span> singleton *_pInstance;</span><br><span class="line">   <span class="keyword">static</span> <span class="built_in">std</span>::mutex mtx;</span><br><span class="line">   <span class="keyword">static</span> GarbageCollect gc;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">singleton* singleton::_pInstance;<span class="comment">//这个得放cpp中，不然编译报错,静态成员默认赋null。</span></span><br><span class="line"><span class="built_in">std</span>::mutex singleton::mtx;<span class="comment">//这个得放cpp中，不然编译报错,</span></span><br><span class="line">singleton::GarbageCollect singleton::gc;<span class="comment">//这个得放cpp中，不然编译报错,</span></span><br></pre></td></tr></table></figure>
+
+<p>当然由于静态变量的空间在全局内存区，其空间的释放是在程序结束之后才进行释放的。而在程序结束时，系统会自动回收该程序申请的空间。</p>
+<p>gc的析构函数在释放静态实例时，也是在程序结束时才会调用的。所以这里写的内存释放意义不大。当然对于那些在程序结束后不自动回收空间的系统，还是需要写空间回收的。</p>
+<p>另外还可以使用智能指针来释放：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">singleton</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    singleton()=<span class="keyword">default</span>;</span><br><span class="line">    ~singleton()=<span class="keyword">default</span>;</span><br><span class="line">    singleton(<span class="keyword">const</span> singleton&amp;)=<span class="keyword">delete</span>;</span><br><span class="line">    singleton&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> singleton&amp;) =<span class="keyword">delete</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> singleton&amp; <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">            <span class="function"><span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; <span class="title">guard</span><span class="params">(mtx)</span></span>;</span><br><span class="line">            <span class="keyword">if</span>(!_pInstance)&#123;</span><br><span class="line">                _pInstance.reset(<span class="keyword">new</span> singleton);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *_pInstance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;singleton&gt;  _pInstance;</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">std</span>::mutex mtx;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;singleton&gt; singleton::_pInstance;<span class="comment">//这个得放cpp中，不然编译报错,</span></span><br><span class="line"><span class="built_in">std</span>::mutex singleton::mtx;<span class="comment">//这个得放cpp中，不然编译报错,</span></span><br></pre></td></tr></table></figure>
+
+<p>这里使用shared_ptr也可以，不过shared_ptr占用的内存和内部复杂度稍大点。</p>
+<p>推荐返回singleton&amp;， 用了智能指针就得放弃裸指针。</p>
+<p>最后，终于可以引出std::call_once再次优化以此去掉额外的锁了</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">singleton</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    singleton()=<span class="keyword">default</span>;</span><br><span class="line">    ~singleton()=<span class="keyword">default</span>;</span><br><span class="line">    singleton(<span class="keyword">const</span> singleton&amp;)=<span class="keyword">delete</span>;</span><br><span class="line">    singleton&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> singleton&amp;) =<span class="keyword">delete</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> singleton&amp; <span class="title">Instance</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">static</span> <span class="built_in">std</span>::once_flag s_flag;</span><br><span class="line">        <span class="built_in">std</span>::call_once(s_flag, [&amp;]()&#123;</span><br><span class="line">            _pInstance.reset(<span class="keyword">new</span> singleton);</span><br><span class="line">        &#125;);</span><br><span class="line">        <span class="keyword">return</span> *_pInstance;</span><br><span class="line">      </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;singleton&gt;  _pInstance;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到std::call_once 可以去除掉互斥量</p>
+
+      
+    </div>
+    
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+  
+    
+    
+  
+</article>
+   
+    <div id="toc" class="toc-article ">
+    <div class="toc-title">目录</div>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#由std-call-once引发的c-单例模式的总结"><span class="toc-number">1.</span> <span class="toc-text">由std::call_once引发的c++单例模式的总结</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#饿汉式："><span class="toc-number">1.1.</span> <span class="toc-text">饿汉式：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#返回指针类型："><span class="toc-number">1.1.0.1.</span> <span class="toc-text">返回指针类型：</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#懒汉式："><span class="toc-number">1.2.</span> <span class="toc-text">懒汉式：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#优化版："><span class="toc-number">1.2.0.1.</span> <span class="toc-text">优化版：</span></a></li></ol></li></ol></li></ol></li></ol>
+</div>
+
+
+  
+
+	<!-- async load  -->
+	<script>
+			function async(u, c) {
+				var d = document, t = 'script',
+						o = d.createElement(t),
+						s = d.getElementsByTagName(t)[0];
+				o.src = u;
+				if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+				s.parentNode.insertBefore(o, s);
+			}
+	</script>
+	<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+	<script>
+			async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+					anchors.options = {
+						visible: 'hover',
+						placement: 'left',
+						// icon: '#'
+					};
+					anchors.add().remove('.article-title').remove('.subheading').remove('.sidebar-container h5');
+			})
+	</script>
+	<style>
+			/* place left on bigger screen */
+			@media all and (min-width: 800px) {
+					.anchorjs-link{
+							position: absolute;
+							left: -0.75em;
+							font-size: 1.1em;
+							margin-top : -0.1em;
+					}
+			}
+	</style>
+
+
+
+
+<!-- UY BEGIN -->
+	<div id="gitment-container"></div>
+	<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+	<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+	<script src="/js/web-pinyin.js"></script>
+	<script>
+		function toUnicode(s){ 
+			return s.replace(/([\u4E00-\u9FA5]|[\uFE30-\uFFA0])/g,function(){
+			return "\\u" + RegExp["$1"].charCodeAt(0).toString(16);
+			});
+		}
+		var title = '由stdcall_once引发的c++单例模式的总结'
+		var GitHub_id = 'Boseny'
+		var client_id = 'f40c67d0359a2646d2b1'
+		var client_secret = '1cbedbd1a1a2e4b42901aee3d7afe1856c1b7e2d'
+		var repo = 'boseny.me'
+		var gitment = new Gitment({
+		// id: '页面 ID', // 可选。默认为 location.href
+		// id:"11" ,
+		id: title,
+		title: title,
+		owner: GitHub_id,//'你的 GitHub ID',
+		repo: repo,//'存储评论的 repo',
+		oauth: {
+			client_id: client_id,//'你的 client ID',
+			client_secret: client_secret,//'你的 client secret',
+		},
+		})
+		gitment.render('gitment-container')
+	</script>
+<!-- UY END -->
+
+
+
+
+            </main>
+          </div>
+        </div>
+       
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/BosenY/Lap" target="_blank">Lap</a>
+    <br/><span id="busuanzi_container_site_uv"> 
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+    </br>
+    
+      
+        &copy; 2020 whb
+      
+    
+  </p>
+</footer>
+    
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-92842840-1', 'auto');
+    ga('send', 'pageview');
+
+</script>
+
+
+  </div>
+
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.bootcss.com/vue/2.5.13/vue.min.js"></script>
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+  <script src="https://unpkg.com/draw-something/dist/draw.min.js"></script>
+  <script>
+    let maxNum = Number.parseInt('10')
+    let iconText = '❤'
+    let color = 'red'
+    new Draw({maxNum, iconText, color})
+  </script>
+
+<script src="/js/index.js"></script>
+<script src="/js/search.js"></script>
+
+</body>
+</html>
